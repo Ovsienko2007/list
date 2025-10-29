@@ -13,6 +13,7 @@ static const int cock                = 0xDEADBEEF;
 static const int image_size          = 1600;
 static const int max_file_name_len   = 16;
 
+typedef int stack_elem_t;
 
 enum list_err_t{
     no_error           = 0,
@@ -22,7 +23,7 @@ enum list_err_t{
     left_canary_death  = 4,
     right_canary_death = 5,
     realloc_error      = 6,
-    icoorect_pos       = 7,
+    incorect_pos       = 7,
 };
 
 enum verify_mod{
@@ -34,10 +35,7 @@ struct list_t{
     int size;
     int capacity;
     int *data;
-
-    int head;
     int *next;
-    int tail;
     int *prev;
     int free_elem;
 };
@@ -52,9 +50,12 @@ list_t init_list(list_err_t *error);
 void destroy_list(list_t *list, list_err_t *error);
 
 void add_list_elem(list_t *list, int pos, int new_elem, list_err_t *error);
-void add_memory_for_list(list_t *list, list_err_t *error);
-void delite_list_elem(list_t *list, int pos, list_err_t *error);
+void delete_list_elem(list_t *list, int pos, list_err_t *error);
+
+// TODO O(n)
 
 list_err_t verify_list(list_t *list, verify_mod mod);
+void start_dump();
+void end_dump();
 void show_dump(list_t *list,  list_err_t error, dump_position position);
 #endif
