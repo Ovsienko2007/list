@@ -1,7 +1,10 @@
 #include "list.h"
 
+static const char *dump_file_position  = "DUMP/dump.html";
+
 static void creat_dot(int num_call, list_t *list);
 static void creat_html(int num_call, list_t *list, list_err_t error, dump_position position);
+static const char *error_str_for_output(list_err_t error);
 
 void show_dump(list_t *list,  list_err_t error, dump_position position){
     static int num_call = 0;
@@ -14,10 +17,10 @@ void show_dump(list_t *list,  list_err_t error, dump_position position){
 }
 
 static void creat_html(int num_call, list_t *list, list_err_t error, dump_position position){
-    FILE *file_html = fopen("DUMP/dump.html","a");//TODO remake
+    FILE *file_html = fopen(dump_file_position,"a");
 
     fprintf(file_html, "<h3 align=\"center\"> StackDump called from %s:%d from func %s</h3>\n", position.file, position.line, position.func);
-    fprintf(file_html, "<pre>\nerror: %d\n"  , error); // TODO remake
+    fprintf(file_html, "<pre>\nerror: %s\n"  , error_str_for_output(error));
     fprintf(file_html, "The %d call\n", num_call);
     fprintf(file_html, "List[%p]:\n\n", list);
 
@@ -117,7 +120,7 @@ static void creat_dot(int num_call, list_t *list){
 }
 
 void start_dump(){
-    FILE *file_html = fopen("DUMP/dump.html","w"); // TODO remake
+    FILE *file_html = fopen(dump_file_position,"w");
     fprintf(file_html,  "<html lang=\"en\">\n"
                         "<head>\n"
                         "  <meta charset=\"UTF-8\">\n"
@@ -129,9 +132,33 @@ void start_dump(){
 }   
 
 void end_dump(){
-    FILE *file_html = fopen("DUMP/dump.html","a"); // TODO remake
+    FILE *file_html = fopen(dump_file_position,"a");
     fprintf(file_html,  "</body>\n"
                         "</html>\n");
                         
     fclose(file_html);
+}
+
+static const char *error_str_for_output(list_err_t error){
+    switch(error){
+        case no_error:
+            return "There is no error";
+        case init_error:
+            return "Initialisation error";
+        case null_ptr:
+            return "List is null ptr";
+        case null_ptr_inside:
+            return  "One of list inside lists is NULL";
+        case left_canary_death:
+            return  "Left canary had been murdered";
+        case right_canary_death:
+            return  "Right canary had been murdered";
+        case realloc_error:
+            return  "Realloc error";
+        case incorect_pos:
+            return  "Incorect position";
+        default:
+            break;
+    }
+    return NULL;
 }

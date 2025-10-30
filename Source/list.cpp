@@ -2,7 +2,7 @@
 
 static void add_memory_for_list(list_t *list, list_err_t *error);
 
-void add_list_elem(list_t *list, int pos, int new_elem, list_err_t *error){
+void add_list_elem(list_t *list, int pos, stack_elem_t new_elem, list_err_t *error){
     if (list == NULL){
         *error = null_ptr;
     }
@@ -66,6 +66,38 @@ void delete_list_elem(list_t *list, int pos, list_err_t *error){
         INTERNAL_DUMP(list, *error);
         return;
     }
+}
+
+stack_elem_t list_elem_by_pos(list_t list, int pos, list_err_t *error){
+    if (pos < 0){
+        pos = list.size + pos + 1;
+    }
+    if (pos <= 0 || pos > list.capacity - 1){ 
+        *error = incorect_pos;
+        INTERNAL_DUMP(&list, *error);
+        return 0;
+    }
+
+    int ret_point_value = 0;
+    if (pos * 2 > list.size){
+        pos = list.size - pos + 1;
+        for (int list_pos = 0; list_pos < pos; list_pos++){
+            ret_point_value = list.prev[ret_point_value];
+        }
+    }
+    else{
+        for (int list_pos = 0; list_pos < pos; list_pos++){
+            ret_point_value = list.next[ret_point_value];
+        }
+    }
+    
+
+    if (verify_list(&list, standart_mod)){
+        *error = init_error;
+        INTERNAL_DUMP(&list, *error);
+        return 0;
+    }
+    return list.data[ret_point_value];
 }
 
 static void add_memory_for_list(list_t *list, list_err_t *error){

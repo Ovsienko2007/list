@@ -8,23 +8,13 @@ int main(){
 
     USER_DUMP(&list);
 
-    for (int i = 0; i < 5; i++){
+    for (int i = 0; i < 7; i++){
         add_list_elem(&list, i, i, &error);    
     }
     USER_DUMP(&list);
 
-    delete_list_elem(&list, 3, &error);
-    USER_DUMP(&list);
-
-    delete_list_elem(&list, 5, &error);
-    USER_DUMP(&list);
-
-
-    delete_list_elem(&list, 1, &error);
-    USER_DUMP(&list);
-
-    add_list_elem(&list, 0, 14, &error);
-    USER_DUMP(&list);
+    printf("%d\n", list_elem_by_pos(list, 1, &error));
+    printf("%d\n", list_elem_by_pos(list, -2, &error));
 
     destroy_list(&list, &error);
     end_dump();
