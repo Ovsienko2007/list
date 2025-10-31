@@ -8,10 +8,10 @@
 #define USER_DUMP(list)             show_dump(list, no_error, dump_position {__FILE__, __FUNCTION__,  __LINE__})
 #define INTERNAL_DUMP(list, error)  show_dump(list, error,    dump_position {__FILE__, __FUNCTION__,  __LINE__})
 
-static const int   start_list_capacity = 16;
-static const int   cock                = 0xDEADBEEF;
-static const int   image_size          = 1600;
-static const int   max_file_name_len   = 16;
+static const int   kStartListCapacity  = 16;
+static const int   kCanary             = 0xDEADBEEF;
+static const int   kImageSize          = 1600;
+static const int   kMaxFileNameLen     = 16;
 
 typedef int stack_elem_t;
 

@@ -119,7 +119,7 @@ static void add_memory_for_list(list_t *list, list_err_t *error){
         list->next[list_pos] = list_pos + 1;
         list->prev[list_pos] = -1;
     }
-    list->data[list->capacity - 1] = cock;
+    list->data[list->capacity - 1] = kCanary;
 
     if (verify_list(list, standart_mod)){
         *error = init_error;
@@ -131,10 +131,10 @@ static void add_memory_for_list(list_t *list, list_err_t *error){
 list_t init_list(list_err_t *error){
     list_t new_list = {
         .size = 0,
-        .capacity = start_list_capacity,
-        .data = (int *)calloc(start_list_capacity, sizeof(int)),
-        .next = (int *)calloc(start_list_capacity, sizeof(int)),
-        .prev = (int *)calloc(start_list_capacity, sizeof(int)),
+        .capacity = kStartListCapacity,
+        .data = (int *)calloc(kStartListCapacity, sizeof(int)),
+        .next = (int *)calloc(kStartListCapacity, sizeof(int)),
+        .prev = (int *)calloc(kStartListCapacity, sizeof(int)),
         .free_elem = 1,
     };
     if (verify_list(&new_list, init_mod)){
@@ -148,8 +148,8 @@ list_t init_list(list_err_t *error){
         new_list.prev[list_pos] = -1;
     }
 
-    new_list.data[0] = cock;
-    new_list.data[new_list.capacity - 1] = cock;
+    new_list.data[0] = kCanary;
+    new_list.data[new_list.capacity - 1] = kCanary;
 
     if (verify_list(&new_list, init_mod)){
         *error = init_error;
@@ -181,10 +181,10 @@ list_err_t verify_list(list_t *list, verify_mod mod){
     }
     if (mod == init_mod) return no_error;
 
-    if (list->data[0] != cock){
+    if (list->data[0] != kCanary){
         return left_canary_death;
     }
-    if (list->data[list->capacity - 1] != cock){
+    if (list->data[list->capacity - 1] != kCanary){
         return right_canary_death;
     }
     return no_error;

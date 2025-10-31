@@ -54,13 +54,13 @@ static void creat_html(int num_call, list_t *list, list_err_t error, dump_positi
     fprintf(file_html, "  %20X %20d %20d\n", list->data[list->capacity - 1], list->next[list->capacity - 1], list->prev[list->capacity - 1]);
     fprintf(file_html, "</font></pre>\n");
 
-    fprintf(file_html,  "<img src=\"./%d.png\" width=\"%d\" alt=\"DUMP %d\" />", num_call, image_size, num_call);
+    fprintf(file_html,  "<img src=\"./%d.png\" width=\"%d\" alt=\"DUMP %d\" />", num_call, kImageSize, num_call);
 
     fclose(file_html);
 }
 
 static void creat_dot(int num_call, list_t *list){
-    char file_name[max_file_name_len] = {};
+    char file_name[kMaxFileNameLen] = {};
     sprintf(file_name, "DUMP/%d.dot", num_call);
 
     FILE *file = fopen(file_name ,"w");
