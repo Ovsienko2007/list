@@ -1,5 +1,13 @@
 #include "list.h"
 
+#define COL_NEXT_BACKGROUND    "#7df879ff"
+#define COL_NEXT_ARROW         "#0ea30eff"
+#define COL_PREV_BACKGROUND    "#f879e7ff"
+#define COL_PREV_ARROW         "#ff0eddff"
+#define COL_BOTH_ARROW         "#2841ceff"
+#define COL_VALUE_BACKGROUND   "#7f8cd6ff"
+#define COL_CURRENT_BACKGROUND "#d3cd77ff"
+
 static const char *dump_file_position  = "DUMP/dump.html";
 
 static void creat_dot(int num_call, list_t *list);
@@ -20,9 +28,9 @@ static void creat_html(int num_call, list_t *list, list_err_t error, dump_positi
     FILE *file_html = fopen(dump_file_position,"a");
 
     fprintf(file_html, "<h3 align=\"center\"> StackDump called from %s:%d from func %s</h3>\n", position.file, position.line, position.func);
-    fprintf(file_html, "<pre>\nerror: %s\n"  , error_str_for_output(error));
+    fprintf(file_html, "<pre style=\"font-size: 11pt\">\n <font color=\"red\">Error: %s</font>\n"  , error_str_for_output(error));
     fprintf(file_html, "The %d call\n", num_call);
-    fprintf(file_html, "List[%p]:\n\n", list);
+    fprintf(file_html, "List[<font color=\"blue\">%p</font>]:\n\n", list);
 
     if (error == null_ptr || error == null_ptr_inside){
         return;
@@ -33,7 +41,8 @@ static void creat_html(int num_call, list_t *list, list_err_t error, dump_positi
     fprintf(file_html, "  tail:            %d\n", list->prev[0]);
     fprintf(file_html, "  First free elem: %d\n\n", list->free_elem);
 
-    fprintf(file_html, "  Data[%p] Next[%p] Prev[%p]\n", list->data, list->next, list->prev);
+    fprintf(file_html, "  Data[<font color=\"blue\">%p</font>] Next[<font color=\"blue\">%p</font>] Prev[<font color=\"blue\">%p</font>]\n",
+                          list->data, list->next, list->prev);
 
     fprintf(file_html, "<font color=\"magenta\">");
     fprintf(file_html, "  %20X %20d %20d\n", list->data[0], list->next[0], list->prev[0]);
@@ -64,43 +73,62 @@ static void creat_dot(int num_call, list_t *list){
     sprintf(file_name, "DUMP/%d.dot", num_call);
 
     FILE *file = fopen(file_name ,"w");
-    fprintf(file, "digraph structs {\n");
-    fprintf(file, "Head            [shape=record,label=\"{Head | %d}\"];\n",      list->next[0]);
-    fprintf(file, "Tail            [shape=record,label=\"{Tail | %d}\"];\n",      list->prev[0]);
-    fprintf(file, "Head->%d [color=\"#ff0eddff\"]\n", list->next[0]);
-    fprintf(file, "Tail->%d [color=\"#0ea30eff\"]\n", list->prev[0]);
-    fprintf(file, "Free_elem       [shape=record, label=\"{Free elem | %d}\"];\n", list->free_elem);
-    fprintf(file, "Free_elem->%d [color=\"#0ea30eff\"];\n", list->free_elem);
+    fprintf(file, "digraph structs {\n"
+                  "nodesep=0.5\n");
+
+                  
+    fprintf(file, "Head  [shape=\"plaintext\", label=<\n"
+                  "       <TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\">"
+                  "       <TR><TD BGCOLOR=\"" COL_VALUE_BACKGROUND "\"> HEAD </TD></TR>"
+                  "       <TR><TD BGCOLOR=\"" COL_NEXT_BACKGROUND "\">%d</TD></TR></TABLE>>];\n", list->next[0]);
+    fprintf(file, "Tail            [shape=\"plaintext\", label=<\n"
+                  "       <TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\">"
+                  "       <TR><TD BGCOLOR=\"" COL_VALUE_BACKGROUND "\"> TAIL </TD></TR>"
+                  "       <TR><TD BGCOLOR=\"" COL_PREV_BACKGROUND  "\">%d</TD></TR></TABLE>>];\n", list->prev[0]);
+    fprintf(file, "Head->%d [color=\"" COL_NEXT_ARROW "\"]\n", list->next[0]);
+    fprintf(file, "Tail->%d [color=\"" COL_PREV_ARROW "\"]\n", list->prev[0]);
+    fprintf(file, "Free_elem       [shape=\"plaintext\", label=<\n"
+                  "       <TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\">"
+                  "       <TR><TD BGCOLOR=\"" COL_VALUE_BACKGROUND "\"> FREE ELEM </TD></TR>"
+                  "       <TR><TD BGCOLOR=\"" COL_NEXT_BACKGROUND "\">%d</TD></TR></TABLE>>];\n", list->free_elem);
+    fprintf(file, "Free_elem->%d [color=\"" COL_PREV_ARROW "\"];\n", list->free_elem);
     
     for (int list_pos = 0; list_pos < list->capacity; list_pos++){
         fprintf(file, 
-        "%d [shape=\"plaintext\", label=<"
-        "<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\">"
-        "    <TR>", list_pos);
+        "%d [shape=\"plaintext\", label=<\n"
+        "<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\">\n"
+        "    <TR>\n", list_pos);
 
         if (list_pos == 0 || list_pos == list->capacity - 1){
-            fprintf(file, "<TD COLSPAN=\"3\">%X</TD>", list->data[list_pos]);
+            fprintf(file, "<TD BGCOLOR=\"" COL_VALUE_BACKGROUND "\" COLSPAN=\"3\">%X</TD>\n", list->data[list_pos]);
         }
         else{
-            fprintf(file, "<TD COLSPAN=\"3\">%d</TD>", list->data[list_pos]);
+            fprintf(file, "<TD BGCOLOR=\"" COL_VALUE_BACKGROUND "\" COLSPAN=\"3\">%d</TD>\n", list->data[list_pos]);
         }
         
         fprintf(file,
-        "    </TR>"
-        "    <TR>"
-        "        <TD>%d</TD>"
-        "        <TD>%d</TD>"
-        "        <TD>%d</TD>"
-        "    </TR>"
-        "</TABLE>"
-        ">];", list->prev[list_pos], list_pos, list->next[list_pos]);
+        "    </TR>\n"
+        "    <TR>\n"
+        "        <TD BGCOLOR=\"" COL_PREV_BACKGROUND    "\"> %d </TD>\n"
+        "        <TD BGCOLOR=\"" COL_CURRENT_BACKGROUND "\"> %d </TD>\n"
+        "        <TD BGCOLOR=\"" COL_NEXT_BACKGROUND    "\"> %d </TD>\n"
+        "    </TR>\n"
+        "</TABLE>\n"
+        ">];\n", list->prev[list_pos], list_pos, list->next[list_pos]);
 
         if (list_pos != 0 && list_pos != list->capacity - 1){
-            if (list->next[list_pos] != 0 && list->next[list_pos] != list->capacity - 1){
-                fprintf(file, "%d->%d[color=\"#0ea30eff\"]\n", list_pos, list->next[list_pos]);
+            if (list->prev[list->next[list_pos]] == list_pos){
+                if (list->next[list_pos] != 0){
+                    fprintf(file, "%d->%d[color=\"" COL_BOTH_ARROW "\"] [dir=\"both\"]\n", list_pos, list->next[list_pos]);
+                }
             }
-            if (list->prev[list_pos] != -1 && list->prev[list_pos] != 0){
-                fprintf(file, "%d->%d[color=\"#ff0eddff\"]\n", list_pos, list->prev[list_pos]);
+            else{
+                if (list->next[list_pos] != 0 && list->next[list_pos] != list->capacity - 1){
+                    fprintf(file, "%d->%d[color=\"" COL_NEXT_ARROW "\"]\n", list_pos, list->next[list_pos]);
+                }
+                if (list->prev[list_pos] != -1 && list->prev[list_pos] != 0){
+                    fprintf(file, "%d->%d[color=\"" COL_PREV_ARROW "\"]\n", list_pos, list->prev[list_pos]);
+                }
             }
         }
     }
