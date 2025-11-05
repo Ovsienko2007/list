@@ -1,3 +1,4 @@
+// TODO rename Dump.cpp -> dump.cpp
 #include "list.h"
 
 #define COL_NEXT_BACKGROUND    "#7df879ff"
@@ -10,9 +11,10 @@
 
 static const char *dump_file_position  = "DUMP/dump.html";
 
+// TODO Is it so f***ing hard to write create instead of creat?
 static void creat_dot(int num_call, list_t *list);
 static void creat_html(int num_call, list_t *list, list_err_t error, dump_position position);
-static const char *error_str_for_output(list_err_t error);
+static const char *error_str_for_output(list_err_t error); // TODO get_error_str
 
 void show_dump(list_t *list,  list_err_t error, dump_position position){
     static int num_call = 0;
@@ -147,6 +149,11 @@ static void creat_dot(int num_call, list_t *list){
     fclose(file);
 }
 
+
+// TODO Too many fopens. Consider passing stream right to the function
+// or storing it in global static variable.
+// This way also limits you to use only files for dumps. Linux allows you 
+// to open internet connections, pseudo-files, serial ports and etc as files
 void start_dump(){
     FILE *file_html = fopen(dump_file_position,"w");
     fprintf(file_html,  "<html lang=\"en\">\n"

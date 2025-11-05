@@ -9,7 +9,7 @@
 #define INTERNAL_DUMP(list, error)  show_dump(list, error,    dump_position {__FILE__, __FUNCTION__,  __LINE__})
 
 static const int   kStartListCapacity  = 16;
-static const int   kCanary             = 0xDEADBEEF;
+static const int   kCanary             = 0xDEADBEEF; // TODO implicit cast (unsigned to signed)
 static const int   kImageSize          = 1600;
 static const int   kMaxFileNameLen     = 16;
 
@@ -32,8 +32,8 @@ enum verify_mod{
 };
 
 struct list_t{
-    int size;
-    int capacity;
+    int size; // TODO use size_t for sizes. int is only 32-bit long
+    int capacity; // TODO size_t
     int *data;
     int *next;
     int *prev;
