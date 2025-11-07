@@ -10,10 +10,11 @@
 #define USER_DUMP(list)             show_dump(list, no_error, dump_position {__FILE__, __FUNCTION__,  __LINE__})
 #define INTERNAL_DUMP(list, error)  show_dump(list, error,    dump_position {__FILE__, __FUNCTION__,  __LINE__})
 
-static const int   kStartListCapacity  = 16;
-static const int   kCanary             = 0xDEADBEEF; // TODO implicit cast (unsigned to signed)
-static const int   kImageSize          = 1600;
-static const int   kMaxFileNameLen     = 16;
+static const int    kStartListCapacity  = 16;
+static const int    kCanary             = 0xDEADBEEF; // TODO implicit cast (unsigned to signed)
+static const int    kImageSize          = 1600;
+static const int    kMaxFileNameLen     = 16;
+static const size_t kNoPtr              = SIZE_MAX;
 
 typedef int stack_elem_t;
 

@@ -8,7 +8,7 @@ void add_list_elem(list_t *list, size_t pos, stack_elem_t new_elem, list_err_t *
     if (list == NULL){
         *error = null_ptr;
     }
-    if (list->prev[pos] == SIZE_MAX || pos > list->capacity - 2){
+    if (list->prev[pos] == kNoPtr || pos > list->capacity - 2){
         *error = incorect_pos;
     }
     if (*error){
@@ -44,7 +44,7 @@ void delete_list_elem(list_t *list, size_t pos, list_err_t *error){
         *error = null_ptr;
     }
 
-    if (list->prev[pos] == SIZE_MAX || pos > list->capacity - 1){ 
+    if (list->prev[pos] == kNoPtr || pos > list->capacity - 1){ 
         *error = incorect_pos;
     } 
 
@@ -56,7 +56,7 @@ void delete_list_elem(list_t *list, size_t pos, list_err_t *error){
     size_t new_next = list->next[pos];
     size_t new_prev = list->prev[pos];
 
-    list->prev[pos] = SIZE_MAX;
+    list->prev[pos] = kNoPtr;
     list->next[pos] = list->free_elem;
     list->free_elem = pos;
     
@@ -72,7 +72,7 @@ void delete_list_elem(list_t *list, size_t pos, list_err_t *error){
 stack_elem_t list_elem_by_pos(list_t list, int pos, list_err_t *error){
     size_t normal_pos = pos < 0 ? list.size + pos + 1 : pos;
 
-    if (normal_pos > list.capacity - 1){ 
+    if (normal_pos > list.size){ 
         *error = incorect_pos;
         INTERNAL_DUMP(&list, *error);
         return 0;
@@ -116,7 +116,7 @@ static void add_memory_for_list(list_t *list, list_err_t *error){
 
     for (size_t list_pos = list->size + 2; list_pos < list->capacity - 1; list_pos++){
         list->next[list_pos] = list_pos + 1;
-        list->prev[list_pos] = SIZE_MAX;
+        list->prev[list_pos] = kNoPtr;
     }
     list->data[list->capacity - 1] = kCanary;
 
@@ -144,7 +144,7 @@ list_t init_list(list_err_t *error){
 
     for (size_t list_pos = 1; list_pos < new_list.capacity; list_pos++){
         new_list.next[list_pos] = list_pos + 1;
-        new_list.prev[list_pos] = SIZE_MAX;
+        new_list.prev[list_pos] = kNoPtr;
     }
 
     new_list.data[0] = kCanary;
@@ -198,7 +198,7 @@ list_err_t verify_list(list_t *list, verify_mod mod){
 
 static bool check_is_nodes_valid(list_t *list){
     for (size_t pos = 0; pos < list->capacity; pos++){
-        if (list->prev[pos] != SIZE_MAX && list->prev[list->next[pos]] != pos) return false;
+        if (list->prev[pos] != kNoPtr && list->prev[list->next[pos]] != pos) return false;
     }
     return true;
 }
