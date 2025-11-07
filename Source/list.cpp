@@ -1,12 +1,14 @@
 #include "list.h"
 
 static void add_memory_for_list(list_t *list, list_err_t *error);
+static bool check_is_nodes_valid(list_t *list);
+static bool check_list_for_cycles(list_t *list);
 
-void add_list_elem(list_t *list, int pos, stack_elem_t new_elem, list_err_t *error){
-    if (list == NULL){ // TODO NULL is defined inside stddef.h header. So you just got lucky that this thing works on your PC
+void add_list_elem(list_t *list, size_t pos, stack_elem_t new_elem, list_err_t *error){
+    if (list == NULL){
         *error = null_ptr;
     }
-    if (0 > pos || list->prev[pos] == -1 || pos > list->capacity - 2){ // TODO use () when combining boolean expressions. (or be ready to memorize all operator priorities)
+    if (list->prev[pos] == kNoPtr || pos > list->capacity - 2){
         *error = incorect_pos;
     }
     if (*error){
@@ -14,8 +16,8 @@ void add_list_elem(list_t *list, int pos, stack_elem_t new_elem, list_err_t *err
         return;
     }
     
-    int new_free_elem = list->next[list->free_elem]; //        <-------------------------------+
-    int new_next    = list->next[pos]; // TODO c'mon, it's not so hard to align these lines <--+
+    size_t new_free_elem = list->next[list->free_elem];
+    size_t new_next      = list->next[pos];
 
     list->prev[list->next[pos]] = list->free_elem;
     list->next[pos]             = list->free_elem;
@@ -29,70 +31,67 @@ void add_list_elem(list_t *list, int pos, stack_elem_t new_elem, list_err_t *err
 
     if (list->size + 3 == list->capacity){
         add_memory_for_list(list, error);
-        
-    } // TODO add blank line
-    if (verify_list(list, standart_mod)){
+    }
+
+    if (verify_list(list, eStandartMod)){
         *error = init_error;
         INTERNAL_DUMP(list, *error);
-        return; // TODO suspicious return...
     }
 }
 
-void delete_list_elem(list_t *list, int pos, list_err_t *error){
+void delete_list_elem(list_t *list, size_t pos, list_err_t *error){
     if (list == NULL){
         *error = null_ptr;
-    } // TODO add blank line here
-    if (pos <= 0 || list->prev[pos] == -1 || pos > list->capacity - 1){ 
+    }
+
+    if (list->prev[pos] == kNoPtr || pos > list->capacity - 1){ 
         *error = incorect_pos;
-    } // TODO add blank line here
+    } 
+
     if (*error){
         INTERNAL_DUMP(list, *error);
         return;
     }
 
-    int new_next = list->next[pos];
-    int new_prev = list->prev[pos];
+    size_t new_next = list->next[pos];
+    size_t new_prev = list->prev[pos];
 
-    list->prev[pos] = -1;
+    list->prev[pos] = kNoPtr;
     list->next[pos] = list->free_elem;
     list->free_elem = pos;
-    // TODO too many spaces
     
     list->next[new_prev] = new_next;
     list->prev[new_next] = new_prev;
 
-    if (verify_list(list, standart_mod)){ // TODO this looks similar to variable name. Pls use different naming style for enum values
+    if (verify_list(list, eStandartMod)){
         *error = init_error;
         INTERNAL_DUMP(list, *error);
-        return; // TODO do you really need this return?
     }
 }
 
 stack_elem_t list_elem_by_pos(list_t list, int pos, list_err_t *error){
-    if (pos < 0){
-        pos = list.size + pos + 1;
-    } // TODO place blank lines before ifs for better readability
-    if (pos <= 0 || pos > list.capacity - 1){ 
+    size_t normal_pos = pos < 0 ? list.size + pos + 1 : pos;
+
+    if (normal_pos > list.size){ 
         *error = incorect_pos;
         INTERNAL_DUMP(&list, *error);
         return 0;
     }
 
-    int ret_point_value = 0;
-    if (pos * 2 > list.size){
-        pos = list.size - pos + 1;
-        for (int list_pos = 0; list_pos < pos; list_pos++){
+    size_t ret_point_value = 0;
+    if (normal_pos * 2 > list.size){
+        normal_pos = list.size - normal_pos + 1;
+        for (size_t list_pos = 0; list_pos < normal_pos; list_pos++){
             ret_point_value = list.prev[ret_point_value];
         }
     }
     else{
-        for (int list_pos = 0; list_pos < pos; list_pos++){
+        for (size_t list_pos = 0; list_pos < normal_pos; list_pos++){
             ret_point_value = list.next[ret_point_value];
         }
     }
-    // TODO remove this line
 
-    if (verify_list(&list, standart_mod)){
+    if (verify_list(&list, eStandartMod)){
         *error = init_error;
         INTERNAL_DUMP(&list, *error);
         return 0;
@@ -102,9 +101,9 @@ stack_elem_t list_elem_by_pos(list_t list, int pos, list_err_t *error){
 
 static void add_memory_for_list(list_t *list, list_err_t *error){
     list->capacity *= 2;
-    int *new_data = (int *)realloc(list->data, list->capacity * sizeof(int));
-    int *new_next = (int *)realloc(list->next, list->capacity * sizeof(int));
-    int *new_prev = (int *)realloc(list->prev, list->capacity * sizeof(int));
+    int    *new_data = (int    *)realloc(list->data, list->capacity * sizeof(int));
+    size_t *new_next = (size_t *)realloc(list->next, list->capacity * sizeof(int));
+    size_t *new_prev = (size_t *)realloc(list->prev, list->capacity * sizeof(int));
 
     if (!new_data || !new_prev || !new_prev){
         *error = realloc_error;
@@ -115,13 +114,13 @@ static void add_memory_for_list(list_t *list, list_err_t *error){
     list->next = new_next;
     list->prev = new_prev;
 
-    for (int list_pos = list->size + 2; list_pos < list->capacity - 1; list_pos++){
+    for (size_t list_pos = list->size + 2; list_pos < list->capacity - 1; list_pos++){
         list->next[list_pos] = list_pos + 1;
-        list->prev[list_pos] = -1;
+        list->prev[list_pos] = kNoPtr;
     }
     list->data[list->capacity - 1] = kCanary;
 
-    if (verify_list(list, standart_mod)){
+    if (verify_list(list, eStandartMod)){
         *error = init_error;
         INTERNAL_DUMP(list, *error);
         return;
@@ -132,26 +131,26 @@ list_t init_list(list_err_t *error){
     list_t new_list = {
         .size = 0,
         .capacity = kStartListCapacity,
-        .data = (int *)calloc(kStartListCapacity, sizeof(int)),
-        .next = (int *)calloc(kStartListCapacity, sizeof(int)),
-        .prev = (int *)calloc(kStartListCapacity, sizeof(int)),
+        .data = (int    *)calloc(kStartListCapacity, sizeof(int)),
+        .next = (size_t *)calloc(kStartListCapacity, sizeof(size_t)),
+        .prev = (size_t *)calloc(kStartListCapacity, sizeof(size_t)),
         .free_elem = 1,
     };
-    if (verify_list(&new_list, init_mod)){
+    if (verify_list(&new_list, eInitMod)){
         *error = init_error;
         INTERNAL_DUMP(&new_list, *error);
         return new_list;
     }
 
-    for (int list_pos = 1; list_pos < new_list.capacity; list_pos++){
+    for (size_t list_pos = 1; list_pos < new_list.capacity; list_pos++){
         new_list.next[list_pos] = list_pos + 1;
-        new_list.prev[list_pos] = -1;
+        new_list.prev[list_pos] = kNoPtr;
     }
 
     new_list.data[0] = kCanary;
     new_list.data[new_list.capacity - 1] = kCanary;
 
-    if (verify_list(&new_list, init_mod)){
+    if (verify_list(&new_list, eStandartMod)){
         *error = init_error;
         INTERNAL_DUMP(&new_list, *error);
         return new_list;
@@ -168,7 +167,6 @@ void destroy_list(list_t *list, list_err_t *error){
     free(list->data);
     free(list->next);
     free(list->prev);
-    return; // TODO why do you have so many useless returns?
 }
 
 list_err_t verify_list(list_t *list, verify_mod mod){
@@ -178,8 +176,9 @@ list_err_t verify_list(list_t *list, verify_mod mod){
     
     if (list->data == NULL || list->next == NULL || list->prev == NULL){
         return null_ptr_inside;
-    } // TODO pls more spaces between if statements
-    if (mod == init_mod) return no_error;
+    }
+
+    if (mod == eInitMod) return no_error;
 
     if (list->data[0] != kCanary){
         return left_canary_death;
@@ -187,7 +186,28 @@ list_err_t verify_list(list_t *list, verify_mod mod){
     if (list->data[list->capacity - 1] != kCanary){
         return right_canary_death;
     }
-    // TODO check for cycles in list?
-    // TODO check each node for validiness of its state?
+    if (!check_is_nodes_valid(list)){
+        return node_is_not_valid;
+    }
+    if (!check_list_for_cycles(list)){
+        return cycle_is_in_list;
+    }
+
     return no_error;
+}
+
+static bool check_is_nodes_valid(list_t *list){
+    for (size_t pos = 0; pos < list->capacity; pos++){
+        if (list->prev[pos] != kNoPtr && list->prev[list->next[pos]] != pos) return false;
+    }
+    return true;
+}
+
+static bool check_list_for_cycles(list_t *list){
+    size_t *check = (size_t *)calloc(list->capacity, sizeof(size_t));
+    for (size_t pos = 0; pos < list->capacity; pos++){
+        if (check[list->next[pos]]) return false;
+        check[list->next[pos]] = 1;
+    }
+    return true;
 }
