@@ -1,4 +1,3 @@
-// TODO rename Dump.cpp -> dump.cpp
 #include "list.h"
 
 #define COL_NEXT_BACKGROUND    "#7df879ff"
@@ -11,58 +10,76 @@
 
 static const char *dump_file_position  = "DUMP/dump.html";
 
-// TODO Is it so f***ing hard to write create instead of creat?
-static void creat_dot(int num_call, list_t *list);
-static void creat_html(int num_call, list_t *list, list_err_t error, dump_position position);
-static const char *error_str_for_output(list_err_t error); // TODO get_error_str
+static void create_dot(int num_call, list_t *list);
+static void create_html(int num_call, list_t *list, list_err_t error, dump_position position);
+static const char *get_error_str(list_err_t error);
 
 void show_dump(list_t *list,  list_err_t error, dump_position position){
     static int num_call = 0;
     num_call++;
-    
-    creat_html(num_call, list, error, position);
+
+    create_html(num_call, list, error, position);
     if (error != null_ptr && error != null_ptr_inside){
-        creat_dot(num_call, list);
+        create_dot(num_call, list);
     }
 }
 
-static void creat_html(int num_call, list_t *list, list_err_t error, dump_position position){
+static void create_html(int num_call, list_t *list, list_err_t error, dump_position position){
     FILE *file_html = fopen(dump_file_position,"a");
-
     fprintf(file_html, "<h3 align=\"center\"> StackDump called from %s:%d from func %s</h3>\n", position.file, position.line, position.func);
-    fprintf(file_html, "<pre style=\"font-size: 11pt\">\n <font color=\"red\">Error: %s</font>\n"  , error_str_for_output(error));
+
+    fprintf(file_html, "<pre style=\"font-size: 11pt\">\n <font color=\"red\">Error: %s</font>\n"  , get_error_str(error));
     fprintf(file_html, "The %d call\n", num_call);
     fprintf(file_html, "List[<font color=\"blue\">%p</font>]:\n\n", list);
 
     if (error == null_ptr || error == null_ptr_inside){
         return;
     }
-    fprintf(file_html, "  size:            %d\n", list->size);
-    fprintf(file_html, "  capacity:        %d\n", list->capacity);
-    fprintf(file_html, "  head:            %d\n", list->next[0]);
-    fprintf(file_html, "  tail:            %d\n", list->prev[0]);
-    fprintf(file_html, "  First free elem: %d\n\n", list->free_elem);
+    fprintf(file_html, "  size:            %lu\n", list->size);
+    fprintf(file_html, "  capacity:        %lu\n", list->capacity);
+    fprintf(file_html, "  head:            %lu\n", list->next[0]);
+    fprintf(file_html, "  tail:            %lu\n", list->prev[0]);
+    fprintf(file_html, "  First free elem: %lu\n\n", list->free_elem);
 
     fprintf(file_html, "  Data[<font color=\"blue\">%p</font>] Next[<font color=\"blue\">%p</font>] Prev[<font color=\"blue\">%p</font>]\n",
                           list->data, list->next, list->prev);
 
     fprintf(file_html, "<font color=\"magenta\">");
-    fprintf(file_html, "  %20X %20d %20d\n", list->data[0], list->next[0], list->prev[0]);
+    
+    if (list->prev[0] != SIZE_MAX){
+        fprintf(file_html, "  %20d %20lu %20lu\n", list->data[0], list->next[0], list->prev[0]);
+    }
+    else{
+        fprintf(file_html, "  %20d %20lu %20d\n", list->data[0], list->next[0], -1);
+    }
+
     fprintf(file_html, "</font>");
 
-    for (int i = 1; i < list->capacity - 1; i++){
-        if (list->prev[i] == -1){
+    for (size_t pos = 1; pos < list->capacity - 1; pos++){
+        if (list->prev[pos] == SIZE_MAX){
             fprintf(file_html, "<font color=\"red\">");
         }
         else{
             fprintf(file_html, "<font color=\"green\">");
         }
-        fprintf(file_html, "  %20d %20d %20d\n", list->data[i], list->next[i], list->prev[i]);
+        if (list->prev[pos] != SIZE_MAX){
+            fprintf(file_html, "  %20d %20lu %20lu\n", list->data[pos], list->next[pos], list->prev[pos]);
+        }
+        else{
+            fprintf(file_html, "  %20d %20lu %20d\n", list->data[pos], list->next[pos], -1);
+        }
         fprintf(file_html, "</font>");
         
     }
     fprintf(file_html, "<font color=\"magenta\">");
-    fprintf(file_html, "  %20X %20d %20d\n", list->data[list->capacity - 1], list->next[list->capacity - 1], list->prev[list->capacity - 1]);
+    
+    if (list->prev[list->capacity - 1] != SIZE_MAX){
+        fprintf(file_html, "  %20d %20lu %20lu\n", list->data[list->capacity - 1], list->next[list->capacity - 1], list->prev[list->capacity - 1]);
+    }
+    else{
+        fprintf(file_html, "  %20d %20lu %20d\n", list->data[list->capacity - 1], list->next[list->capacity - 1], -1);
+    }
+
     fprintf(file_html, "</font></pre>\n");
 
     fprintf(file_html,  "<img src=\"./%d.png\" width=\"%d\" alt=\"DUMP %d\" />", num_call, kImageSize, num_call);
@@ -70,7 +87,7 @@ static void creat_html(int num_call, list_t *list, list_err_t error, dump_positi
     fclose(file_html);
 }
 
-static void creat_dot(int num_call, list_t *list){
+static void create_dot(int num_call, list_t *list){
     char file_name[kMaxFileNameLen] = {};
     sprintf(file_name, "DUMP/%d.dot", num_call);
 
@@ -82,22 +99,22 @@ static void creat_dot(int num_call, list_t *list){
     fprintf(file, "Head  [shape=\"plaintext\", label=<\n"
                   "       <TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\">"
                   "       <TR><TD BGCOLOR=\"" COL_VALUE_BACKGROUND "\"> HEAD </TD></TR>"
-                  "       <TR><TD BGCOLOR=\"" COL_NEXT_BACKGROUND "\">%d</TD></TR></TABLE>>];\n", list->next[0]);
+                  "       <TR><TD BGCOLOR=\"" COL_NEXT_BACKGROUND "\">%lu</TD></TR></TABLE>>];\n", list->next[0]);
     fprintf(file, "Tail            [shape=\"plaintext\", label=<\n"
                   "       <TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\">"
                   "       <TR><TD BGCOLOR=\"" COL_VALUE_BACKGROUND "\"> TAIL </TD></TR>"
-                  "       <TR><TD BGCOLOR=\"" COL_PREV_BACKGROUND  "\">%d</TD></TR></TABLE>>];\n", list->prev[0]);
-    fprintf(file, "Head->%d [color=\"" COL_NEXT_ARROW "\"]\n", list->next[0]);
-    fprintf(file, "Tail->%d [color=\"" COL_PREV_ARROW "\"]\n", list->prev[0]);
+                  "       <TR><TD BGCOLOR=\"" COL_PREV_BACKGROUND  "\">%lu</TD></TR></TABLE>>];\n", list->prev[0]);
+    fprintf(file, "Head->%lu [color=\"" COL_NEXT_ARROW "\"]\n", list->next[0]);
+    fprintf(file, "Tail->%lu [color=\"" COL_PREV_ARROW "\"]\n", list->prev[0]);
     fprintf(file, "Free_elem       [shape=\"plaintext\", label=<\n"
                   "       <TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\">"
                   "       <TR><TD BGCOLOR=\"" COL_VALUE_BACKGROUND "\"> FREE ELEM </TD></TR>"
-                  "       <TR><TD BGCOLOR=\"" COL_NEXT_BACKGROUND "\">%d</TD></TR></TABLE>>];\n", list->free_elem);
-    fprintf(file, "Free_elem->%d [color=\"" COL_PREV_ARROW "\"];\n", list->free_elem);
+                  "       <TR><TD BGCOLOR=\"" COL_NEXT_BACKGROUND "\">%lu</TD></TR></TABLE>>];\n", list->free_elem);
+    fprintf(file, "Free_elem->%lu [color=\"" COL_PREV_ARROW "\"];\n", list->free_elem);
     
-    for (int list_pos = 0; list_pos < list->capacity; list_pos++){
+    for (size_t list_pos = 0; list_pos < list->capacity; list_pos++){
         fprintf(file, 
-        "%d [shape=\"plaintext\", label=<\n"
+        "%lu [shape=\"plaintext\", label=<\n"
         "<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\">\n"
         "    <TR>\n", list_pos);
 
@@ -110,26 +127,36 @@ static void creat_dot(int num_call, list_t *list){
         
         fprintf(file,
         "    </TR>\n"
-        "    <TR>\n"
-        "        <TD BGCOLOR=\"" COL_PREV_BACKGROUND    "\"> %d </TD>\n"
-        "        <TD BGCOLOR=\"" COL_CURRENT_BACKGROUND "\"> %d </TD>\n"
-        "        <TD BGCOLOR=\"" COL_NEXT_BACKGROUND    "\"> %d </TD>\n"
+        "    <TR>\n");
+
+        if (list->prev[list_pos] != SIZE_MAX){
+            fprintf(file,
+            "        <TD BGCOLOR=\"" COL_PREV_BACKGROUND    "\"> %lu </TD>\n", list->prev[list_pos]);
+        } 
+        else{
+            fprintf(file,
+            "        <TD BGCOLOR=\"" COL_PREV_BACKGROUND    "\"> %d  </TD>\n", -1);
+        }
+        
+        fprintf(file,
+        "        <TD BGCOLOR=\"" COL_CURRENT_BACKGROUND "\"> %lu </TD>\n"
+        "        <TD BGCOLOR=\"" COL_NEXT_BACKGROUND    "\"> %lu </TD>\n"
         "    </TR>\n"
         "</TABLE>\n"
-        ">];\n", list->prev[list_pos], list_pos, list->next[list_pos]);
+        ">];\n", list_pos, list->next[list_pos]);
 
         if (list_pos != 0 && list_pos != list->capacity - 1){
             if (list->prev[list->next[list_pos]] == list_pos){
                 if (list->next[list_pos] != 0){
-                    fprintf(file, "%d->%d[color=\"" COL_BOTH_ARROW "\"] [dir=\"both\"]\n", list_pos, list->next[list_pos]);
+                    fprintf(file, "%lu->%lu[color=\"" COL_BOTH_ARROW "\"] [dir=\"both\"]\n", list_pos, list->next[list_pos]);
                 }
             }
             else{
                 if (list->next[list_pos] != 0 && list->next[list_pos] != list->capacity - 1){
-                    fprintf(file, "%d->%d[color=\"" COL_NEXT_ARROW "\"]\n", list_pos, list->next[list_pos]);
+                    fprintf(file, "%lu->%lu[color=\"" COL_NEXT_ARROW "\"]\n", list_pos, list->next[list_pos]);
                 }
-                if (list->prev[list_pos] != -1 && list->prev[list_pos] != 0){
-                    fprintf(file, "%d->%d[color=\"" COL_PREV_ARROW "\"]\n", list_pos, list->prev[list_pos]);
+                if (list->prev[list_pos] != SIZE_MAX && list->prev[list_pos] != 0){
+                    fprintf(file, "%lu->%lu[color=\"" COL_PREV_ARROW "\"]\n", list_pos, list->prev[list_pos]);
                 }
             }
         }
@@ -137,8 +164,8 @@ static void creat_dot(int num_call, list_t *list){
 
     fprintf(file, "{\n"
                   "rank=same;\n");
-    for (int list_pos = 0; list_pos < list->capacity; list_pos++){
-        fprintf(file, "%d", list_pos);
+    for (size_t list_pos = 0; list_pos < list->capacity; list_pos++){
+        fprintf(file, "%lu", list_pos);
         if (list_pos < list->capacity - 1){
             fprintf(file, ",");
         }
@@ -153,7 +180,7 @@ static void creat_dot(int num_call, list_t *list){
 // TODO Too many fopens. Consider passing stream right to the function
 // or storing it in global static variable.
 // This way also limits you to use only files for dumps. Linux allows you 
-// to open internet connections, pseudo-files, serial ports and etc as files
+// to open internet connections, pseudo-files, serial ports and etc as files  SIZE_MAX
 void start_dump(){
     FILE *file_html = fopen(dump_file_position,"w");
     fprintf(file_html,  "<html lang=\"en\">\n"
@@ -174,7 +201,7 @@ void end_dump(){
     fclose(file_html);
 }
 
-static const char *error_str_for_output(list_err_t error){
+static const char *get_error_str(list_err_t error){
     switch(error){
         case no_error:
             return "There is no error";
@@ -183,15 +210,19 @@ static const char *error_str_for_output(list_err_t error){
         case null_ptr:
             return "List is null ptr";
         case null_ptr_inside:
-            return  "One of list inside lists is NULL";
+            return "One of list inside lists is NULL";
         case left_canary_death:
-            return  "Left canary had been murdered";
+            return "Left canary had been murdered";
         case right_canary_death:
-            return  "Right canary had been murdered";
+            return "Right canary had been murdered";
         case realloc_error:
-            return  "Realloc error";
+            return "Realloc error";
         case incorect_pos:
-            return  "Incorect position";
+            return "Incorect position";
+        case node_is_not_valid:
+            return "Node is not valid";
+        case cycle_is_in_list:
+            return "Cycle is in_list";
         default:
             break;
     }
