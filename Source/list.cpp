@@ -209,5 +209,7 @@ static bool check_list_for_cycles(list_t *list){
         if (check[list->next[pos]]) return false;
         check[list->next[pos]] = 1;
     }
+    free(check);
+
     return true;
 }
