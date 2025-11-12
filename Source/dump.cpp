@@ -219,7 +219,7 @@ static const char *get_error_str(list_err_t error){
             return "Right canary had been murdered";
         case realloc_error:
             return "Realloc error";
-        case incorect_pos:
+        case incorrect_pos:
             return "Incorect position";
         case node_is_not_valid:
             return "Node is not valid";

@@ -8,13 +8,14 @@ int main(){
     USER_DUMP(&list);
 
     for (int i = 0; i < 7; i++){
-        add_list_elem(&list, (size_t) i, i + 2, &error);    
+        add_list_elem(&list, (size_t) i, i, &error);    
     }
+    printf("%lu!!!\n", list.size);
 
     USER_DUMP(&list);
 
-    printf("%d\n", list_elem_by_pos(list, 1, &error));
-    printf("%d\n", list_elem_by_pos(list, -2, &error)); 
+    printf("%d\n", list_elem_by_pos(list, 2, &error));
+    printf("%d\n", list_elem_by_pos(list, -6, &error)); 
 
     destroy_list(&list, &error);
     

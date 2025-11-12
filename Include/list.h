@@ -26,13 +26,13 @@ enum list_err_t{
     left_canary_death  = 4,
     right_canary_death = 5,
     realloc_error      = 6,
-    incorect_pos       = 7,
+    incorrect_pos       = 7,
     node_is_not_valid  = 8,
     cycle_is_in_list   = 9,
 };
 
 enum verify_mod{
-    eStandartMod = 0,
+    eStandardMod = 0,
     eInitMod     = 1,
 };
 

@@ -9,7 +9,7 @@ void add_list_elem(list_t *list, size_t pos, stack_elem_t new_elem, list_err_t *
         *error = null_ptr;
     }
     if (list->prev[pos] == kNoPtr || pos > list->capacity - 2){
-        *error = incorect_pos;
+        *error = incorrect_pos;
     }
     if (*error){
         INTERNAL_DUMP(list, *error);
@@ -33,7 +33,7 @@ void add_list_elem(list_t *list, size_t pos, stack_elem_t new_elem, list_err_t *
         add_memory_for_list(list, error);
     }
 
-    if (verify_list(list, eStandartMod)){
+    if (verify_list(list, eStandardMod)){
         *error = init_error;
         INTERNAL_DUMP(list, *error);
     }
@@ -45,7 +45,7 @@ void delete_list_elem(list_t *list, size_t pos, list_err_t *error){
     }
 
     if (list->prev[pos] == kNoPtr || pos > list->capacity - 1){ 
-        *error = incorect_pos;
+        *error = incorrect_pos;
     } 
 
     if (*error){
@@ -63,17 +63,19 @@ void delete_list_elem(list_t *list, size_t pos, list_err_t *error){
     list->next[new_prev] = new_next;
     list->prev[new_next] = new_prev;
 
-    if (verify_list(list, eStandartMod)){
+    list->size--;
+
+    if (verify_list(list, eStandardMod)){
         *error = init_error;
         INTERNAL_DUMP(list, *error);
     }
 }
 
 stack_elem_t list_elem_by_pos(list_t list, int pos, list_err_t *error){
-    size_t normal_pos = pos < 0 ? list.size + pos + 1 : pos;
+    size_t normal_pos = pos < 0 ? list.size - (size_t)(-pos) + 1 : (size_t)pos;
 
     if (normal_pos > list.size){ 
-        *error = incorect_pos;
+        *error = incorrect_pos;
         INTERNAL_DUMP(&list, *error);
         return 0;
     }
@@ -91,7 +93,7 @@ stack_elem_t list_elem_by_pos(list_t list, int pos, list_err_t *error){
         }
     }
 
-    if (verify_list(&list, eStandartMod)){
+    if (verify_list(&list, eStandardMod)){
         *error = init_error;
         INTERNAL_DUMP(&list, *error);
         return 0;
@@ -120,7 +122,7 @@ static void add_memory_for_list(list_t *list, list_err_t *error){
     }
     list->data[list->capacity - 1] = kCanary;
 
-    if (verify_list(list, eStandartMod)){
+    if (verify_list(list, eStandardMod)){
         *error = init_error;
         INTERNAL_DUMP(list, *error);
         return;
@@ -150,7 +152,7 @@ list_t init_list(list_err_t *error){
     new_list.data[0] = kCanary;
     new_list.data[new_list.capacity - 1] = kCanary;
 
-    if (verify_list(&new_list, eStandartMod)){
+    if (verify_list(&new_list, eStandardMod)){
         *error = init_error;
         INTERNAL_DUMP(&new_list, *error);
         return new_list;
@@ -204,12 +206,32 @@ static bool check_is_nodes_valid(list_t *list){
 }
 
 static bool check_list_for_cycles(list_t *list){
-    size_t *check = (size_t *)calloc(list->capacity, sizeof(size_t));
-    for (size_t pos = 0; pos < list->capacity; pos++){
-        if (check[list->next[pos]]) return false;
-        check[list->next[pos]] = 1;
+    size_t two_steps = list->next[0];
+    size_t one_step  = list->next[0];
+
+    while (true){
+        if ((two_steps = list->next[two_steps]) == 0) break;
+
+        if ((two_steps = list->next[two_steps]) == 0) break;
+
+        one_step  = list->next[one_step];
+
+        if (two_steps == one_step) return false;
     }
-    free(check);
+
+    two_steps = list->free_elem;
+    one_step  = list->free_elem;
+
+    while (true){
+        if ((two_steps = list->next[two_steps]) == list->capacity) break;
+
+        if ((two_steps = list->next[two_steps]) == list->capacity) break;
+
+        one_step  = list->next[one_step];
+
+        if (two_steps == one_step) return false;
+    }
+
 
     return true;
 }
