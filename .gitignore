@@ -1,2 +1,4 @@
 Build/
 DUMP/
+.cache/
+*.json

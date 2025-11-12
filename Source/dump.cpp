@@ -54,10 +54,10 @@ static void create_html(int num_call, list_t *list, list_err_t error, dump_posit
     fprintf(html_stream, "<font color=\"magenta\">");
     
     if (list->prev[0] != kNoPtr){
-        fprintf(html_stream, "  %20d %20lu %20lu\n", list->data[0], list->next[0], list->prev[0]);
+        fprintf(html_stream, "  %20X %20lu %20lu\n", list->data[0], list->next[0], list->prev[0]);
     }
     else{
-        fprintf(html_stream, "  %20d %20lu %20d\n", list->data[0], list->next[0], -1);
+        fprintf(html_stream, "  %20X %20lu %20d\n", list->data[0], list->next[0], -1);
     }
 
     fprintf(html_stream, "</font>");
@@ -81,10 +81,10 @@ static void create_html(int num_call, list_t *list, list_err_t error, dump_posit
     fprintf(html_stream, "<font color=\"magenta\">");
     
     if (list->prev[list->capacity - 1] != kNoPtr){
-        fprintf(html_stream, "  %20d %20lu %20lu\n", list->data[list->capacity - 1], list->next[list->capacity - 1], list->prev[list->capacity - 1]);
+        fprintf(html_stream, "  %20X %20lu %20lu\n", list->data[list->capacity - 1], list->next[list->capacity - 1], list->prev[list->capacity - 1]);
     }
     else{
-        fprintf(html_stream, "  %20d %20lu %20d\n", list->data[list->capacity - 1], list->next[list->capacity - 1], -1);
+        fprintf(html_stream, "  %20X %20lu %20d\n", list->data[list->capacity - 1], list->next[list->capacity - 1], -1);
     }
 
     fprintf(html_stream, "</font></pre>\n");
